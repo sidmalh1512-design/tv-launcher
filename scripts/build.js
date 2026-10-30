@@ -18,4 +18,7 @@ acorn.parse(code, { ecmaVersion: 5 });
 const html = fs.readFileSync('src/index.html', 'utf8').replace('/*BUNDLE*/', () => code);
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync('dist/index.html', html);
+const service = fs.readFileSync('src/service.js', 'utf8');
+acorn.parse(service, { ecmaVersion: 5 });
+fs.writeFileSync('dist/service.js', service);
 console.log('dist/index.html', html.length, 'bytes');

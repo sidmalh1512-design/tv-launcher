@@ -1,6 +1,6 @@
 const stage=document.getElementById('stage'),heroIn=document.getElementById('heroIn'),rot=document.getElementById('rot'),hero=document.getElementById('hero'),shadow=document.getElementById('shadow'),msg=document.getElementById('msg');
 const PLAY='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" d="M1 0h2v1h1v1h1v1h1v1H5v1H4v1H3v1H1z"/></svg>',DISC='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" fill-rule="evenodd" d="M2 0h3v1h1v1h1v3H6v1H5v1H2V6H1V5H0V2h1V1h1zM3 2v3h1V4h1V3H4V2z"/></svg>',NOTE='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" d="M3 0h4v5H6v1H4V5h2V2H4v4H3v1H1V6H0V5h3z"/></svg>',PORT='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" fill-rule="evenodd" d="M0 1h7v3H6v1H5v1H2V5H1V4H0zM1 2v1h5V2z"/></svg>';
-// The TV's installed-apps list supplies each app's ID and icon when available.
+// The TV's installed-apps list, read through the module service, supplies each app's ID and icon when available.
 // These IDs are the fallback, tried in turn because they differ by TV year and region.
 const NAMES=[
 ['Netflix',PLAY,['org.tizen.netflix-app','11101200001','3201907018807'],null,/^netflix/i],
@@ -44,31 +44,48 @@ function hop(){if(busy)return;busy=true;const x=hx(col),y=hy(row),d=520*slow;
 hero.animate([{offset:0,transform:T(x,y)},{offset:0.2,transform:T(x,y),easing:'ease-out'},{offset:0.48,transform:T(x,y-26),easing:'ease-in'},{offset:0.76,transform:T(x,y)},{offset:1,transform:T(x,y)}],{duration:d});
 const sa=shadow.animate([{offset:0,transform:T(x,y)+' scale(1)'},{offset:0.2,transform:T(x,y)+' scale(1)'},{offset:0.48,transform:T(x,y)+' scale(0.75)'},{offset:0.76,transform:T(x,y)+' scale(1)'},{offset:1,transform:T(x,y)+' scale(1)'}],{duration:d});
 sched([[0,'crouch'],[0.2,'jump'],[0.76,'crouch'],[0.92,'idle']],d);
-sa.onfinish=()=>{busy=false;open(NAMES[row*3+col])}}
+sa.onfinish=()=>{busy=false;openTile(NAMES[row*3+col])}}
 
-const PREVIEW=!window.tizen;
-function open(n){
+// TizenBrew serves module pages from /module/. Those pages have no tizen API, so the
+// module's service (src/service.js) lists and launches apps for them.
+const PREVIEW=location.pathname.indexOf('/module/')!==0;
+const SERVICE='http://127.0.0.1:8086';
+function ask(path,done){
+const x=new XMLHttpRequest();let called=false;
+const finish=r=>{if(!called){called=true;done(r)}};
+x.open('GET',SERVICE+path);x.timeout=15000;
+x.onload=()=>{let r=null;try{r=JSON.parse(x.responseText)}catch(e){}finish(r)};
+x.onerror=x.ontimeout=()=>finish(null);
+x.send()}
+function openTile(n){
 if(PREVIEW){msg.textContent='Preview: the TV would open '+n[0]+'.';return}
 msg.textContent='Opening '+n[0]+'…';
-if(n[3])sendKey(n[3],n[0]);else launch(n,0)}
-function launch(n,i){
-const fail=()=>{if(i+1<n[2].length)launch(n,i+1);else msg.textContent=n[0]+' could not be opened. Is it installed on this TV?'};
-try{tizen.application.launch(n[2][i],()=>{msg.textContent=''},fail)}catch(e){fail()}}
-// Keeps the generic icon unless the app's real one actually loads: module pages are served
-// over http, which may not be allowed to read the local files iconPath points to.
-function showIcon(tile,path){
-if(!path)return;
+if(n[3])sendKey(n[3],n[0]);else launch(n)}
+function launch(n){
+ask('/launch?ids='+encodeURIComponent(n[2].join(',')),r=>{
+if(!r){launchDirect(n);return}
+msg.textContent=r.ok?'':n[0]+' could not be opened. Is it installed on this TV?'})}
+// If the service isn't running, ask the TV's REST API directly. The page can't read its reply.
+function launchDirect(n){
+n[2].filter(id=>/^\d+$/.test(id)).forEach(id=>{const x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:8001/api/v2/applications/'+id);x.send()});
+setTimeout(()=>{if(msg.textContent==='Opening '+n[0]+'…')msg.textContent=n[0]+' may not have opened. Restart TizenBrew and try again.'},4000)}
+// Keeps the generic icon unless the app's real one actually loads.
+function showIcon(tile,id){
 const img=new Image();
+img.crossOrigin='anonymous';
 img.onload=()=>{const g=tile.querySelector('.g');g.innerHTML='';g.appendChild(img)};
-img.src=path.charAt(0)==='/'?'file://'+path:path}
-function useInstalledApps(){
+img.src=SERVICE+'/icon?id='+encodeURIComponent(id)}
+// The service starts alongside the page, so it may need a few seconds to answer.
+function useInstalledApps(tries){
 if(PREVIEW)return;
-try{tizen.application.getAppsInfo(list=>{NAMES.forEach((n,i)=>{
+ask('/apps',r=>{
+if(!r){if(tries>0)setTimeout(()=>useInstalledApps(tries-1),1000);return}
+NAMES.forEach((n,i)=>{
 if(!n[4])return;
-const a=list.filter(x=>n[4].test(x.name))[0];
+const a=r.apps.filter(x=>n[4].test(x.name))[0];
 if(!a)return;
 n[2]=[a.id].concat(n[2].filter(id=>id!==a.id));
-showIcon(tiles[i],a.iconPath)})},()=>{})}catch(e){}}
+showIcon(tiles[i],a.id)})})}
 // No public Tizen API switches input without a partner privilege, so HDMI tiles press the
 // key through the TV's own remote-control socket. The TV asks to allow this the first time.
 function sendKey(key,label){
@@ -90,7 +107,7 @@ attempt(0)}
 // TizenBrew opens a module by navigating to it, so its own UI is the previous history entry.
 function exitToBrew(){
 if(PREVIEW){msg.textContent='Preview: Back would return to TizenBrew.';return}
-if(history.length>1)history.back();else tizen.application.getCurrentApplication().exit()}
+history.back()}
 // Samsung remotes report keyCode reliably; 10009 is Back, Escape and Backspace stand in for it in a browser.
 document.addEventListener('keydown',e=>{const c=e.keyCode,k={37:[-1,0],39:[1,0],38:[0,-1],40:[0,1]}[c];
 if(k){e.preventDefault();go(k[0],k[1])}
@@ -100,5 +117,5 @@ else if(c===10009||(PREVIEW&&(c===27||c===8))){e.preventDefault();exitToBrew()}}
 function fit(){const s=Math.min(innerWidth/700,innerHeight/394),tv=document.getElementById('tv');
 tv.style.transform='translate('+((innerWidth-700*s)/2)+'px,'+((innerHeight-394*s)/2)+'px) scale('+s+')'}
 fit();window.addEventListener('resize',()=>{fit();place()});
-useInstalledApps();
+useInstalledApps(20);
 if(PREVIEW)msg.textContent='Preview: arrows move, Enter opens, Esc is Back.';
