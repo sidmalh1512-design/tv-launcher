@@ -21,7 +21,7 @@ function readApps(done) {
     try {
         tizen.application.getAppsInfo(function (list) {
             apps = list.map(function (a) {
-                return { id: a.id, name: a.name };
+                return { id: a.id, name: a.name, show: a.show };
             });
             finish(null);
         }, function (e) {

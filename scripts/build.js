@@ -16,7 +16,7 @@ const { code } = babel.transformSync(wrapped, {
 acorn.parse(code, { ecmaVersion: 5 });
 
 // Tile artwork is inlined, in the same order as NAMES in src/launcher.js.
-const images = ['netflix', 'youtube', 'prime', 'spotify', 'hdmi1', 'hdmi2'].map((name, i) => {
+const images = ['netflix', 'youtube', 'prime', 'spotify', 'disney', 'apps'].map((name, i) => {
   const svg = fs.readFileSync('assets/tiles/' + name + '.svg').toString('base64');
   return '.tile:nth-child(' + (i + 1) + '){background-image:url(data:image/svg+xml;base64,' + svg + ')}';
 }).join('\n');

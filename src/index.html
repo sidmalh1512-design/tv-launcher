@@ -11,17 +11,28 @@
 }
 html,body{margin:0;height:100%;overflow:hidden;background:var(--screen);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
 #tv{position:absolute;left:0;top:0;width:700px;height:394px;box-sizing:border-box;padding:18px 16px 16px;transform-origin:0 0}
-#stage{position:relative;height:360px}
-.tile{position:absolute;height:56px;border-radius:10px;background:var(--tile) center/100% 100% no-repeat;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:0;transition:transform .2s ease-out;cursor:pointer;transform-origin:50% 100%;box-sizing:border-box}
-.tile.on{transform:scale(1.06);border:2px solid var(--accent)}
-#hero{position:absolute;left:0;bottom:56px;width:36px;height:88px;z-index:2}
+#stage{position:absolute;left:16px;width:668px;bottom:16px;height:360px;transition:transform .7s ease-in-out}
+.tile{position:absolute;height:200px;border-radius:14px;background:var(--tile) center/100% 100% no-repeat;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:0;transition:transform .2s ease-out;cursor:pointer;transform-origin:50% 100%;box-sizing:border-box}
+.tile.on{transform:scale(1.02);border:2px solid var(--accent)}
+#hero{position:absolute;left:0;bottom:200px;width:36px;height:88px;z-index:2}
 #rot{width:36px;height:88px;transform-origin:50% 64%}
 #heroIn{width:36px;height:88px;transform-origin:50% 100%}
 #heroIn.idle{animation:br 2.4s steps(2) infinite}
 @keyframes br{50%{transform:scale(1.02,.985)}}
 #heroIn svg{shape-rendering:crispEdges;display:block}
-#shadow{position:absolute;left:4px;bottom:53px;width:28px;height:5px;border-radius:50%;background:var(--shadow);z-index:1}
-#msg{position:absolute;left:0;right:0;top:0;margin:0;text-align:center;color:var(--muted);font-size:14px;z-index:3}
+#shadow{position:absolute;left:4px;bottom:197px;width:28px;height:5px;border-radius:50%;background:var(--shadow);z-index:1}
+#msg{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;color:var(--fg);font-size:14px;z-index:5;text-shadow:0 0 6px #000}
+[hidden]{display:none!important}
+#apps{position:absolute;left:0;top:0;width:700px;height:394px;box-sizing:border-box;padding:30px 60px 16px;background:var(--screen);z-index:4;display:flex;flex-direction:column}
+#apps h1{margin:0 0 10px;font-size:20px;font-weight:600}
+.searchbar{border:2px solid var(--line);border-radius:10px;background:var(--tile);padding:6px 12px;margin-bottom:10px}
+.searchbar.on{border-color:var(--accent)}
+#search{display:block;width:100%;box-sizing:border-box;border:0;outline:0;background:transparent;color:var(--fg);font:inherit;font-size:15px}
+#search::placeholder{color:var(--muted)}
+#appNote{margin:0 0 6px;color:var(--muted);font-size:13px;min-height:20px}
+#appList{flex:1;overflow:hidden}
+.app{height:34px;line-height:30px;margin-bottom:4px;padding:0 12px;box-sizing:border-box;border:2px solid transparent;border-radius:8px;background:var(--tile);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.on{border-color:var(--accent)}
 /*TILE_IMAGES*/
 </style>
 </head>
@@ -30,8 +41,14 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--screen);color:va
   <div id="stage">
     <div id="shadow"></div>
     <div id="hero"><div id="rot"><div id="heroIn" class="idle"></div></div></div>
-    <p id="msg" aria-live="polite"></p>
   </div>
+  <section id="apps" hidden>
+    <h1>All Apps</h1>
+    <div class="searchbar"><input id="search" type="text" placeholder="Search apps" autocomplete="off" aria-label="Search apps"></div>
+    <p id="appNote" aria-live="polite"></p>
+    <div id="appList"></div>
+  </section>
+  <p id="msg" aria-live="polite"></p>
 </div>
 <script>/*BUNDLE*/</script>
 </body>

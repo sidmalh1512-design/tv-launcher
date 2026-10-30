@@ -1,6 +1,6 @@
 # Avatar Q Launcher
 
-A TizenBrew launcher module for a Samsung TV: a pixel avatar that flips and jumps between six tiles.
+A TizenBrew launcher module for a Samsung TV: a pixel avatar that flips and jumps across rows of two large tiles.
 
 ## Install
 
@@ -14,7 +14,7 @@ In TizenBrew, open the Module Manager, choose the GitHub option, and enter:
 | --- | --- |
 | Arrows | Move the avatar between tiles |
 | OK | Open the tile |
-| Back | Return to TizenBrew |
+| Back | Return to TizenBrew, or leave All Apps |
 
 If you make this module auto-launch, hold Up while TizenBrew starts to stay in TizenBrew.
 
@@ -41,6 +41,6 @@ TizenBrew module pages have no access to the `tizen` API, so `src/service.js` ru
 
 A matching app's ID from the TV's list is tried first, followed by the known IDs in `src/launcher.js`. If `tizen.application.launch` fails, the service tries the TV's REST API. If the service isn't running, the page calls that REST API directly.
 
-## HDMI tiles
+## All Apps
 
-Tizen's input-switching API needs a privilege TizenBrew doesn't have, so these tiles send `KEY_HDMI1` and `KEY_HDMI2` through the TV's local remote-control socket. The TV asks for permission the first time.
+The last tile opens an alphabetical list of installed apps with a search bar. The list comes from the module service. If the service isn't running, it comes from the TV's local remote-control socket, and the TV asks for permission the first time.
