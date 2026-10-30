@@ -1,0 +1,21 @@
+{
+  "name": "@sidmalh1512-design/tv-launcher",
+  "appName": "Avatar Q Launcher",
+  "version": "1.0.0",
+  "description": "Pixel avatar TV home screen",
+  "packageType": "app",
+  "appPath": "dist/index.html",
+  "keys": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sidmalh1512-design/tv-launcher"
+  },
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "acorn": "^8.11.0"
+  }
+}

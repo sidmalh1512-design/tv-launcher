@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Avatar Q Launcher</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --screen:#0B0E14;--tile:#1F2430;--line:#323949;--fg:#E7EAF1;--muted:#99A1B3;--accent:#6E9DFF;--accent-ink:#A9C4FF;--shadow:#3A4252;
+  --display:"Silkscreen","Courier New",monospace;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--screen);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+#tv{position:absolute;left:0;top:0;width:700px;height:394px;box-sizing:border-box;padding:18px 16px 16px;transform-origin:0 0}
+#stage{position:relative;height:360px}
+.tile{position:absolute;height:56px;border-radius:10px;background:var(--tile);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--muted);transition:transform .2s ease-out;cursor:pointer;transform-origin:50% 100%;box-sizing:border-box}
+.tile .g{min-height:14px;margin-bottom:1px;color:var(--fg)}
+.tile .g img{display:block;width:24px;height:24px}
+.tile .g svg{display:block;shape-rendering:crispEdges}
+.tile.on{transform:scale(1.06);border:2px solid var(--accent);color:var(--accent-ink)}
+.tile.on .g{color:var(--accent-ink)}
+#hero{position:absolute;left:0;bottom:56px;width:36px;height:88px;z-index:2}
+#rot{width:36px;height:88px;transform-origin:50% 64%}
+#heroIn{width:36px;height:88px;transform-origin:50% 100%}
+#heroIn.idle{animation:br 2.4s steps(2) infinite}
+@keyframes br{50%{transform:scale(1.02,.985)}}
+#heroIn svg{shape-rendering:crispEdges;display:block}
+#shadow{position:absolute;left:4px;bottom:53px;width:28px;height:5px;border-radius:50%;background:var(--shadow);z-index:1}
+#msg{position:absolute;left:0;right:0;top:0;margin:0;text-align:center;color:var(--muted);font-size:14px;z-index:3}
+</style>
+</head>
+<body>
+<div id="tv">
+  <div id="stage">
+    <div id="shadow"></div>
+    <div id="hero"><div id="rot"><div id="heroIn" class="idle"></div></div></div>
+    <p id="msg" aria-live="polite"></p>
+  </div>
+</div>
+<script>/*BUNDLE*/</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<title>Avatar Q Launcher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: a TV-style screen holding a 3x2 launcher grid, controls and notes below */
+:root{
+  --bg:#EEF0F4;--panel:#FFFFFF;--screen:#E3E7EE;--tile:#F7F8FB;--line:#C9CFDA;--fg:#1C2130;--muted:#5D6578;--accent:#2F6FEB;--accent-ink:#1D4FB8;--shadow:#AEB6C6;
+  --display:"Silkscreen","Courier New",monospace;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11141B;--panel:#191D26;--screen:#0B0E14;--tile:#1F2430;--line:#323949;--fg:#E7EAF1;--muted:#99A1B3;--accent:#6E9DFF;--accent-ink:#A9C4FF;--shadow:#3A4252;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11141B;--panel:#191D26;--screen:#0B0E14;--tile:#1F2430;--line:#323949;--fg:#E7EAF1;--muted:#99A1B3;--accent:#6E9DFF;--accent-ink:#A9C4FF;--shadow:#3A4252;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:720px;margin:0 auto;padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:400;font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.screen{background:var(--screen);border:1px solid var(--line);border-radius:14px;padding:18px 16px 16px}
+#stage{position:relative;height:360px}
+.tile{position:absolute;height:56px;border-radius:10px;background:var(--tile);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;font-weight:500;color:var(--muted);transition:transform .2s ease-out;cursor:pointer;transform-origin:50% 100%;box-sizing:border-box}
+.tile .g{font-family:var(--display);font-size:14px;color:var(--fg)}
+.tile.on{transform:scale(1.06);border:2px solid var(--accent);color:var(--accent-ink)}
+.tile.on .g{color:var(--accent-ink)}
+#hero{position:absolute;left:0;bottom:56px;width:36px;height:88px;z-index:2}
+#rot{width:36px;height:88px;transform-origin:50% 64%}
+#heroIn{width:36px;height:88px;transform-origin:50% 100%}
+#heroIn.idle{animation:br 2.4s steps(2) infinite}
+@keyframes br{50%{transform:scale(1.02,.985)}}
+#heroIn svg{shape-rendering:crispEdges;display:block}
+#shadow{position:absolute;left:4px;bottom:53px;width:28px;height:5px;border-radius:50%;background:var(--shadow);z-index:1}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-size:14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:44px}
+button:hover{border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.sel{border:2px solid var(--accent);color:var(--accent-ink)}
+#msg{margin:0;min-height:22px;color:var(--muted);font-size:14px}
+.notes{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.notes h2{font-family:var(--display);font-weight:400;font-size:15px;margin:0 0 8px;letter-spacing:.03em}
+.notes dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:0}
+.notes dt{font-weight:600}
+.notes dd{margin:0;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){#heroIn.idle{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Avatar Q Launcher</h1>
+    <p class="lede">Your pixel avatar on a 3×2 TV home screen. Use the arrows (or your keyboard) to move between tiles.</p>
+  </header>
+
+  <div class="screen">
+    <div id="stage">
+      <div id="shadow"></div>
+      <div id="hero"><div id="rot"><div id="heroIn" class="idle"></div></div></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="bl" aria-label="Move left">←</button>
+    <button id="bu" aria-label="Move up">↑</button>
+    <button id="bd" aria-label="Move down">↓</button>
+    <button id="br" aria-label="Move right">→</button>
+    <button id="ok">Open</button>
+    <button id="slow">Slow motion</button>
+  </div>
+  <p id="msg" aria-live="polite"></p>
+
+  <section class="notes">
+    <h2>Moves</h2>
+    <dl>
+      <dt>Left / right</dt><dd>Crouch, arms up, tucked front flip around the hips, open out, bent-knee landing.</dd>
+      <dt>Up</dt><dd>Deep crouch, spring with arms reaching, land on the higher tile.</dd>
+      <dt>Down</dt><dd>Small hop off the edge, fall with arms out for balance, deep landing crouch.</dd>
+      <dt>Open</dt><dd>Crouch-hop on the spot, then the app launches.</dd>
+      <dt>Idle</dt><dd>Two-frame breathing and a blink every few seconds.</dd>
+    </dl>
+  </section>
+</div>
+
+<script>
+const COL={H:"#1A120C",h:"#3B2B1F",S:"#B07A52",s:"#94623F",E:"#1A120C",W:"#F1EFE8",M:"#7A4434",m:"#9A5A44",P:"#4A4D55",p:"#5E616B",q:"#C9CCD3",R:"#6B3E1F",k:"#3E4148",L:"#2B3A55",l:"#22304A",K:"#F1EFE8",G:"#B4B2A9"};
+function E(px,py,cx,cy,rx,ry){const a=(px-cx)/rx,b=(py-cy)/ry;return a*a+b*b<=1}
+function Cc(px,py,cx,cy,r){return (px-cx)*(px-cx)+(py-cy)*(py-cy)<=r*r}
+function Rr(px,py,x0,y0,x1,y1){return px>=x0&&px<x1&&py>=y0&&py<y1}
+function seg(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;let t=((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));const ex=ax+t*dx-px,ey=ay+t*dy-py;return {d:Math.sqrt(ex*ex+ey*ey),t}}
+const back=(px,q)=>E(px,q,16,6.5,10.5,6)||Cc(px,q,9,4,3.5)||Cc(px,q,13,1.6,3.8)||Cc(px,q,18.5,1.3,3.8)||Cc(px,q,23,3.5,3.5)||Cc(px,q,6.5,6.5,2.5)||Cc(px,q,25.5,6.5,2.5)||Cc(px,q,16,0.8,3)||E(px,q,7.5,11,2.6,5)||E(px,q,24.5,11,2.6,5);
+const front=(px,q)=>E(px,q,16,5.5,9,3)||Cc(px,q,10.5,8.5,1.3)||Cc(px,q,13.5,8.8,1)||Cc(px,q,18,8.6,1.2)||Cc(px,q,21.5,8.2,1)||seg(px,q,15,6.5,11,11.5).d<=0.7||seg(px,q,17,6.5,19,9).d<=0.7||E(px,q,8,12,1.5,3.6)||E(px,q,24,12,1.5,3.6);
+function pix(x,y,pose){const px=x+.5,q=y+.5-2;const dy={crouch:6,tuck:16}[pose]||0;const u=q-dy,r=Math.floor(u);let c=null;
+if(back(px,u))c='H';
+if(E(px,u,7.3,16,1.5,2.6)||E(px,u,24.7,16,1.5,2.6))c=(x===7||x===24)?'s':'S';
+if(Rr(px,u,13,22,19,29))c='S';
+if(Rr(px,u,6,28,26,pose==='tuck'?46:52)||E(px,u,16,30,10.5,3))c='P';
+if(pose==='idle'||pose==='blink'||pose==='crouch'){if(Rr(px,u,3,29,7,36)||Rr(px,u,25,29,29,36)||Rr(px,u,3.5,36,6,48)||Rr(px,u,26,36,28.5,48))c='P';if(Rr(px,u,3.5,48,6,50.5)||Rr(px,u,26,48,28.5,50.5))c='S'}
+if(pose==='jump'){const a=seg(px,u,5,31,2.5,17),b=seg(px,u,27,31,29.5,17);if(a.d<=1.7)c=a.t<0.85?'P':'S';if(b.d<=1.7)c=b.t<0.85?'P':'S'}
+if(pose==='fall'){const a=seg(px,u,5,31,0.5,34),b=seg(px,u,27,31,31.5,34);if(a.d<=1.7)c=a.t<0.85?'P':'S';if(b.d<=1.7)c=b.t<0.85?'P':'S'}
+if(c==='P'&&u>=50&&u<52&&px>=6&&px<26)c='k';
+if(c==='P'&&u>=42&&u<48&&px>=10&&px<22&&(u<43||px<11||px>=21))c='k';
+const inT=(ax,ay,bx,by,cx,cy)=>{const d1=(px-bx)*(ay-by)-(ax-bx)*(u-by),d2=(px-cx)*(by-cy)-(bx-cx)*(u-cy),d3=(px-ax)*(cy-ay)-(cx-ax)*(u-ay);return !((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0))};
+if(E(px,u,16,27.8,8,3)&&!E(px,u,16,27.2,4,2))c='p';
+if((x===13||x===18)&&u>=30&&u<37)c='q';
+if(pose==='idle'||pose==='blink'){if(Rr(px,q,8,52,24,56))c='L';if(Rr(px,q,8,56,15.5,74)||Rr(px,q,16.5,56,24,74))c=(x===14||x===17)?'l':'L';if(Rr(px,q,7,73,15.5,76)||Rr(px,q,16.5,73,25,76))c=(q>=75)?'G':'K'}
+if(pose==='jump'||pose==='fall'){if(Rr(px,q,8,52,24,57))c='L';if(seg(px,q,11.5,54,10,72).d<=3.4||seg(px,q,20.5,54,22,72).d<=3.4)c='L';if(Rr(px,q,6.5,72,14,75)||Rr(px,q,18,72,25.5,75))c=(q>=74)?'G':'K'}
+if(pose==='crouch'){if(Rr(px,q,8,58,24,61))c='L';if(seg(px,q,10.5,60,8.5,66).d<=3.4||seg(px,q,21.5,60,23.5,66).d<=3.4)c='L';if(seg(px,q,8.5,66,11,73).d<=3.1||seg(px,q,23.5,66,21,73).d<=3.1)c='L';if(Rr(px,q,7,73,15.5,76)||Rr(px,q,16.5,73,25,76))c=(q>=75)?'G':'K'}
+if(pose==='tuck'){if(Rr(px,q,8,60,24,63))c='L';if(Rr(px,q,8,61,15,70)||Rr(px,q,17,61,24,70))c='L';if(E(px,q,11.5,60,3.8,3.4)||E(px,q,20.5,60,3.8,3.4))c='L';if(Rr(px,q,7.5,69,15.5,72)||Rr(px,q,16.5,69,24.5,72))c=(q>=71)?'G':'K';
+const a=seg(px,u,5,30,6.5,34),b=seg(px,u,27,30,25.5,34);if(a.d<=1.8||b.d<=1.8)c='P';const fa=seg(px,u,6.5,34,10.5,44),fb=seg(px,u,25.5,34,21.5,44);if(fa.d<=1.4||fb.d<=1.4)c=(fa.d<=1.4?fa.t:fb.t)>0.8?'S':'P'}
+if(E(px,u,16,15.5,8.5,10))c=u>=24?'s':'S';
+if(front(px,u))c='H';
+if(c==='H'&&u<14&&((x*2+y*3)%6===0))c='h';
+if(c==='S'||c==='s'){const bl=pose==='blink';
+if(r===13&&((x>=10&&x<=13)||(x>=18&&x<=21)))c='H';
+if(r===12&&((x>=11&&x<=13)||(x>=18&&x<=20)))c='H';
+if(r===14&&((x>=10&&x<=13)||(x>=18&&x<=21)))c='s';
+if(r===15){if(bl){if((x>=10&&x<=13)||(x>=18&&x<=21))c='s'}else{if(x===10||x===13||x===18||x===21)c='W';if(x===11||x===12||x===19||x===20)c='E'}}
+if(r===16&&!bl&&(x===11||x===12||x===19||x===20))c='E';
+if((r===17||r===18)&&x===17)c='s';
+if(r===20&&(x===14||x===17))c='s';
+if(r===21&&(x===12||x===19))c='M';
+if(r===22&&x>=13&&x<=18)c='M';
+if(r===23&&x>=14&&x<=17)c='m'}
+return c}
+function render(p){let o='';for(let y=0;y<78;y++){let x=0;while(x<32){const c=pix(x,y,p);let n=1;while(x+n<32&&pix(x+n,y,p)===c)n++;if(c)o+='<rect x="'+x+'" y="'+y+'" width="'+n+'" height="1.02" fill="'+COL[c]+'"/>';x+=n}}return '<svg viewBox="0 0 32 78" width="36" height="88" preserveAspectRatio="none" aria-hidden="true">'+o+'</svg>'}
+const SP={};['idle','blink','jump','crouch','tuck','fall'].forEach(p=>SP[p]=render(p));
+const stage=document.getElementById('stage'),heroIn=document.getElementById('heroIn'),rot=document.getElementById('rot'),hero=document.getElementById('hero'),shadow=document.getElementById('shadow'),msg=document.getElementById('msg');
+const NAMES=[['Movies','▶'],['Videos','◉'],['Music','♪'],['HDMI 1','⎘'],['HDMI 2','⎘'],['Settings','⚙']];
+const TOP=156,GAP=8;
+let col=0,row=1,busy=false,slow=1,pose='idle';
+const tiles=NAMES.map((n,i)=>{const d=document.createElement('div');d.className='tile';d.innerHTML='<span class="g" aria-hidden="true">'+n[1]+'</span>'+n[0];stage.insertBefore(d,shadow);d.onclick=()=>{const c=i%3,r=Math.floor(i/3);if(r===row)go(c-col,0);else if(c===col)go(0,r-row);else msg.textContent='Move one step at a time with the arrows.'};return d});
+let W=0;
+function layout(){W=(stage.clientWidth-2*GAP)/3;tiles.forEach((t,i)=>{const c=i%3,r=Math.floor(i/3);t.style.width=W+'px';t.style.left=(c*(W+GAP))+'px';t.style.bottom=(r===0?TOP:0)+'px'})}
+const hx=c=>c*(W+GAP)+W/2-18, hy=r=>r===0?-TOP:0;
+const T=(a,b)=>'translate('+a+'px,'+b+'px)';
+function setT(xx,yy){hero.style.transform=T(xx,yy);shadow.style.transform=T(xx,yy)}
+function place(){layout();setT(hx(col),hy(row))}
+function mark(){tiles.forEach((t,i)=>t.classList.toggle('on',i===row*3+col))}
+function setPose(p){pose=p;heroIn.innerHTML=SP[p];heroIn.className=p==='idle'?'idle':''}
+setPose('idle');layout();mark();setT(hx(col),hy(row));
+setInterval(()=>{if(busy||pose!=='idle')return;heroIn.innerHTML=SP.blink;setTimeout(()=>{if(!busy&&pose==='idle')heroIn.innerHTML=SP.idle},140)},3200);
+function sched(list,d){list.forEach(([o,p])=>setTimeout(()=>setPose(p),o*d))}
+function go(dc,dr){const nc=col+dc,nr=row+dr;if(busy||nc<0||nc>2||nr<0||nr>1||(dc===0&&dr===0))return;busy=true;msg.textContent='';
+const x0=hx(col),y0=hy(row),x1=hx(nc),y1=hy(nr);let d,ha;
+if(dr===0){const dir=dc>0?1:-1,dist=Math.abs(dc),h=60+(dist-1)*12;d=(900+(dist-1)*120)*slow;const mx=(x0+x1)/2;
+hero.animate([{offset:0,transform:T(x0,y0)},{offset:0.18,transform:T(x0,y0),easing:'ease-out'},{offset:0.5,transform:T(mx,y0-h),easing:'ease-in'},{offset:0.82,transform:T(x1,y1)},{offset:1,transform:T(x1,y1)}],{duration:d});
+rot.animate([{offset:0,transform:'rotate(0deg)'},{offset:0.24,transform:'rotate(0deg)',easing:'ease-in-out'},{offset:0.78,transform:'rotate('+(360*dir)+'deg)'},{offset:1,transform:'rotate('+(360*dir)+'deg)'}],{duration:d});
+ha=shadow.animate([{offset:0,transform:T(x0,y0)+' scale(1)',opacity:1},{offset:0.18,transform:T(x0,y0)+' scale(1)',opacity:1,easing:'ease-out'},{offset:0.5,transform:T(mx,y0)+' scale(0.5)',opacity:0.4,easing:'ease-in'},{offset:0.82,transform:T(x1,y1)+' scale(1)',opacity:1},{offset:1,transform:T(x1,y1)+' scale(1)',opacity:1}],{duration:d});
+sched([[0,'crouch'],[0.18,'jump'],[0.27,'tuck'],[0.72,'jump'],[0.82,'crouch'],[0.95,'idle']],d)}
+else if(dr<0){d=850*slow;
+hero.animate([{offset:0,transform:T(x0,y0)},{offset:0.22,transform:T(x0,y0),easing:'cubic-bezier(.2,.8,.4,1)'},{offset:0.62,transform:T(x1,y1-26),easing:'ease-in'},{offset:0.8,transform:T(x1,y1)},{offset:1,transform:T(x1,y1)}],{duration:d});
+ha=shadow.animate([{offset:0,transform:T(x0,y0),opacity:1},{offset:0.22,transform:T(x0,y0),opacity:1},{offset:0.32,transform:T(x0,y0),opacity:0},{offset:0.33,transform:T(x1,y1)+' scale(0.5)',opacity:0},{offset:0.8,transform:T(x1,y1)+' scale(1)',opacity:1},{offset:1,transform:T(x1,y1),opacity:1}],{duration:d});
+sched([[0,'crouch'],[0.22,'jump'],[0.8,'crouch'],[0.95,'idle']],d)}
+else{d=760*slow;
+hero.animate([{offset:0,transform:T(x0,y0)},{offset:0.12,transform:T(x0,y0),easing:'ease-out'},{offset:0.3,transform:T(x0,y0-16),easing:'cubic-bezier(.5,0,.9,.6)'},{offset:0.78,transform:T(x1,y1)},{offset:1,transform:T(x1,y1)}],{duration:d});
+ha=shadow.animate([{offset:0,transform:T(x0,y0),opacity:1},{offset:0.12,transform:T(x0,y0),opacity:1},{offset:0.24,transform:T(x0,y0),opacity:0},{offset:0.25,transform:T(x1,y1)+' scale(0.5)',opacity:0},{offset:0.78,transform:T(x1,y1)+' scale(1)',opacity:1},{offset:1,transform:T(x1,y1),opacity:1}],{duration:d});
+sched([[0,'crouch'],[0.12,'jump'],[0.3,'fall'],[0.78,'crouch'],[0.94,'idle']],d)}
+col=nc;row=nr;mark();
+ha.onfinish=()=>{setT(x1,y1);rot.style.transform='rotate(0deg)';busy=false}}
+function hop(){if(busy)return;busy=true;const x=hx(col),y=hy(row),d=520*slow;
+hero.animate([{offset:0,transform:T(x,y)},{offset:0.2,transform:T(x,y),easing:'ease-out'},{offset:0.48,transform:T(x,y-26),easing:'ease-in'},{offset:0.76,transform:T(x,y)},{offset:1,transform:T(x,y)}],{duration:d});
+const sa=shadow.animate([{offset:0,transform:T(x,y)+' scale(1)'},{offset:0.2,transform:T(x,y)+' scale(1)'},{offset:0.48,transform:T(x,y)+' scale(0.75)'},{offset:0.76,transform:T(x,y)+' scale(1)'},{offset:1,transform:T(x,y)+' scale(1)'}],{duration:d});
+sched([[0,'crouch'],[0.2,'jump'],[0.76,'crouch'],[0.92,'idle']],d);
+sa.onfinish=()=>{busy=false;msg.textContent='Opening '+NAMES[row*3+col][0]+'…'}}
+document.getElementById('bl').onclick=()=>go(-1,0);
+document.getElementById('br').onclick=()=>go(1,0);
+document.getElementById('bu').onclick=()=>go(0,-1);
+document.getElementById('bd').onclick=()=>go(0,1);
+document.getElementById('ok').onclick=hop;
+const sb=document.getElementById('slow');sb.onclick=()=>{slow=slow===1?3:1;sb.classList.toggle('sel',slow===3);sb.setAttribute('aria-pressed',slow===3)};
+document.addEventListener('keydown',e=>{const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(k){e.preventDefault();go(k[0],k[1])}if(e.key==='Enter'&&document.activeElement===document.body)hop()});
+window.addEventListener('resize',place);
+</script>
