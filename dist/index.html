@@ -587,7 +587,7 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
       x.send();
     });
     setTimeout(function () {
-      if (msg.textContent === 'Opening ' + n[0] + '…') msg.textContent = n[0] + ' may not have opened. Restart TizenBrew and try again.';
+      if (msg.textContent === 'Opening ' + n[0] + '…') msg.textContent = 'If ' + n[0] + " doesn't open, check that it's installed on this TV.";
     }, 4000);
   }
   // Keeps the generic icon unless the app's real one actually loads.

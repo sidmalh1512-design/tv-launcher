@@ -68,7 +68,7 @@ msg.textContent=r.ok?'':n[0]+' could not be opened. Is it installed on this TV?'
 // If the service isn't running, ask the TV's REST API directly. The page can't read its reply.
 function launchDirect(n){
 n[2].filter(id=>/^\d+$/.test(id)).forEach(id=>{const x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:8001/api/v2/applications/'+id);x.send()});
-setTimeout(()=>{if(msg.textContent==='Opening '+n[0]+'…')msg.textContent=n[0]+' may not have opened. Restart TizenBrew and try again.'},4000)}
+setTimeout(()=>{if(msg.textContent==='Opening '+n[0]+'…')msg.textContent='If '+n[0]+" doesn't open, check that it's installed on this TV."},4000)}
 // Keeps the generic icon unless the app's real one actually loads.
 function showIcon(tile,id){
 const img=new Image();
