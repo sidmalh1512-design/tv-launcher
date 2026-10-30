@@ -15,7 +15,14 @@ const { code } = babel.transformSync(wrapped, {
 // Fails the build if any syntax newer than ES5 survived.
 acorn.parse(code, { ecmaVersion: 5 });
 
-const html = fs.readFileSync('src/index.html', 'utf8').replace('/*BUNDLE*/', () => code);
+// Tile artwork is inlined, in the same order as NAMES in src/launcher.js.
+const images = ['netflix', 'youtube', 'prime', 'spotify', 'hdmi1', 'hdmi2'].map((name, i) => {
+  const svg = fs.readFileSync('assets/tiles/' + name + '.svg').toString('base64');
+  return '.tile:nth-child(' + (i + 1) + '){background-image:url(data:image/svg+xml;base64,' + svg + ')}';
+}).join('\n');
+const html = fs.readFileSync('src/index.html', 'utf8')
+  .replace('/*TILE_IMAGES*/', () => images)
+  .replace('/*BUNDLE*/', () => code);
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync('dist/index.html', html);
 const service = fs.readFileSync('src/service.js', 'utf8');

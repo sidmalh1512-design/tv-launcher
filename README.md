@@ -31,11 +31,15 @@ Open `dist/index.html` in a browser. Arrows move, Enter opens, Esc is Back. Noth
 
 `src/avatar.js` holds the avatar's poses. The move animations are in `src/launcher.js`.
 
-## Tile icons and app IDs
+## Tile artwork
 
-TizenBrew module pages have no access to the `tizen` API, so `src/service.js` runs as the module's service, where `tizen` is available. The page asks it over `http://127.0.0.1:8086` to list installed apps, launch them and read their icons. It only answers requests from the launcher page.
+Each tile is an image from `assets/tiles/`, built into `dist/index.html`. Replace a file and rebuild to change it. The logos belong to their owners and come from Wikimedia Commons.
 
-A matching app's ID from the TV's list is tried first, followed by the known IDs in `src/launcher.js`. If `tizen.application.launch` fails, the service tries the TV's REST API. A tile keeps its generic icon if the real one can't be read.
+## Opening apps
+
+TizenBrew module pages have no access to the `tizen` API, so `src/service.js` runs as the module's service, where `tizen` is available. The page asks it over `http://127.0.0.1:8086` to list installed apps and launch them. It only answers requests from the launcher page.
+
+A matching app's ID from the TV's list is tried first, followed by the known IDs in `src/launcher.js`. If `tizen.application.launch` fails, the service tries the TV's REST API. If the service isn't running, the page calls that REST API directly.
 
 ## HDMI tiles
 

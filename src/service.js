@@ -1,7 +1,6 @@
 // Runs in TizenBrew's Node service, which has the tizen API that module pages lack.
 // Plain ES5 because Tizen 4.0 TVs can run a very old Node.
 var http = require('http');
-var fs = require('fs');
 var url = require('url');
 
 var PORT = 8086;
@@ -22,7 +21,7 @@ function readApps(done) {
     try {
         tizen.application.getAppsInfo(function (list) {
             apps = list.map(function (a) {
-                return { id: a.id, name: a.name, iconPath: a.iconPath };
+                return { id: a.id, name: a.name };
             });
             finish(null);
         }, function (e) {
@@ -79,16 +78,6 @@ function sendJson(res, body) {
     res.end(JSON.stringify(body));
 }
 
-function sendIcon(res, id) {
-    var app = apps.filter(function (a) { return a.id === id; })[0];
-    if (!app || !app.iconPath) { res.writeHead(404); return res.end(); }
-    fs.readFile(app.iconPath.replace(/^file:\/\//, ''), function (err, data) {
-        if (err) { res.writeHead(404); return res.end(); }
-        res.writeHead(200, { 'Content-Type': 'image/png' });
-        res.end(data);
-    });
-}
-
 var server = http.createServer(function (req, res) {
     // Only the launcher page may use this, so other sites can't open apps on the TV.
     if (req.headers.origin !== PAGE_ORIGIN) { res.writeHead(403); return res.end(); }
@@ -98,15 +87,13 @@ var server = http.createServer(function (req, res) {
         readApps(function (error) {
             sendJson(res, {
                 error: error,
-                apps: apps.map(function (a) { return { id: a.id, name: a.name }; })
+                apps: apps
             });
         });
     } else if (parsed.pathname === '/launch') {
         launch(String(parsed.query.ids || '').split(',').filter(Boolean), function (result) {
             sendJson(res, result);
         });
-    } else if (parsed.pathname === '/icon') {
-        sendIcon(res, parsed.query.id);
     } else {
         res.writeHead(404);
         res.end();

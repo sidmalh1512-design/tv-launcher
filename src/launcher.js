@@ -1,14 +1,13 @@
 const stage=document.getElementById('stage'),heroIn=document.getElementById('heroIn'),rot=document.getElementById('rot'),hero=document.getElementById('hero'),shadow=document.getElementById('shadow'),msg=document.getElementById('msg');
-const PLAY='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" d="M1 0h2v1h1v1h1v1h1v1H5v1H4v1H3v1H1z"/></svg>',DISC='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" fill-rule="evenodd" d="M2 0h3v1h1v1h1v3H6v1H5v1H2V6H1V5H0V2h1V1h1zM3 2v3h1V4h1V3H4V2z"/></svg>',NOTE='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" d="M3 0h4v5H6v1H4V5h2V2H4v4H3v1H1V6H0V5h3z"/></svg>',PORT='<svg viewBox="0 0 7 7" width="14" height="14"><path fill="currentColor" fill-rule="evenodd" d="M0 1h7v3H6v1H5v1H2V5H1V4H0zM1 2v1h5V2z"/></svg>';
-// The TV's installed-apps list, read through the module service, supplies each app's ID and icon when available.
+// The TV's installed-apps list, read through the module service, supplies each app's ID when available.
 // These IDs are the fallback, tried in turn because they differ by TV year and region.
 const NAMES=[
-['Netflix',PLAY,['org.tizen.netflix-app','11101200001','3201907018807'],null,/^netflix/i],
-['YouTube',DISC,['9Ur5IzDKqV.TizenYouTube','111299001912'],null,/^youtube$/i],
-['Prime Video',PLAY,['org.tizen.ignition','evKhCgZelL.AmazonIgnitionWebApp','3201512006785','3201910019365'],null,/prime video/i],
-['Spotify',NOTE,['rJeHak5zRg.Spotify','3201606009684'],null,/^spotify/i],
-['HDMI 1',PORT,null,'KEY_HDMI1'],
-['HDMI 2',PORT,null,'KEY_HDMI2']];
+['Netflix','',['org.tizen.netflix-app','11101200001','3201907018807'],null,/^netflix/i],
+['YouTube','',['9Ur5IzDKqV.TizenYouTube','111299001912'],null,/^youtube$/i],
+['Prime Video','',['org.tizen.ignition','evKhCgZelL.AmazonIgnitionWebApp','3201512006785','3201910019365'],null,/prime video/i],
+['Spotify','',['rJeHak5zRg.Spotify','3201606009684'],null,/^spotify/i],
+['HDMI 1','',null,'KEY_HDMI1'],
+['HDMI 2','',null,'KEY_HDMI2']];
 const TOP=156,GAP=8;
 let col=0,row=1,busy=false,slow=1,pose='idle';
 const tiles=NAMES.map((n,i)=>{const d=document.createElement('div');d.className='tile';d.innerHTML='<span class="g" aria-hidden="true">'+n[1]+'</span>'+n[0];stage.insertBefore(d,shadow);d.onclick=()=>{const c=i%3,r=Math.floor(i/3);if(r===row)go(c-col,0);else if(c===col)go(0,r-row);else msg.textContent='Move one step at a time with the arrows.'};return d});
@@ -69,23 +68,16 @@ msg.textContent=r.ok?'':n[0]+' could not be opened. Is it installed on this TV?'
 function launchDirect(n){
 n[2].filter(id=>/^\d+$/.test(id)).forEach(id=>{const x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:8001/api/v2/applications/'+id);x.send()});
 setTimeout(()=>{if(msg.textContent==='Opening '+n[0]+'…')msg.textContent='If '+n[0]+" doesn't open, check that it's installed on this TV."},4000)}
-// Keeps the generic icon unless the app's real one actually loads.
-function showIcon(tile,id){
-const img=new Image();
-img.crossOrigin='anonymous';
-img.onload=()=>{const g=tile.querySelector('.g');g.innerHTML='';g.appendChild(img)};
-img.src=SERVICE+'/icon?id='+encodeURIComponent(id)}
 // The service starts alongside the page, so it may need a few seconds to answer.
 function useInstalledApps(tries){
 if(PREVIEW)return;
 ask('/apps',r=>{
 if(!r){if(tries>0)setTimeout(()=>useInstalledApps(tries-1),1000);return}
-NAMES.forEach((n,i)=>{
+NAMES.forEach(n=>{
 if(!n[4])return;
 const a=r.apps.filter(x=>n[4].test(x.name))[0];
 if(!a)return;
-n[2]=[a.id].concat(n[2].filter(id=>id!==a.id));
-showIcon(tiles[i],a.id)})})}
+n[2]=[a.id].concat(n[2].filter(id=>id!==a.id))})})}
 // No public Tizen API switches input without a partner privilege, so HDMI tiles press the
 // key through the TV's own remote-control socket. The TV asks to allow this the first time.
 function sendKey(key,label){
