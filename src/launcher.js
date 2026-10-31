@@ -20,9 +20,13 @@ function place(){layout();setT(hx(col),hy(row))}
 // Keeps the current row in the same spot, with the edges of its neighbours showing.
 function scroll(){stage.style.transform='translateY('+((2-row)*TOP-44)+'px)'}
 function mark(){tiles.forEach((t,i)=>t.classList.toggle('on',i===row*2+col))}
-function setPose(p){pose=p;heroIn.innerHTML=SP[p];heroIn.className=p==='idle'?'idle':''}
+// Every pose stays loaded so changing pose doesn't make the TV redraw the avatar.
+const POSES={};Object.keys(SP).forEach(p=>{const d=document.createElement('div');d.className='pose';d.innerHTML=SP[p];heroIn.appendChild(d);POSES[p]=d});
+let showing=null;
+function showPose(p){if(showing)showing.classList.remove('show');showing=POSES[p];showing.classList.add('show')}
+function setPose(p){pose=p;showPose(p);heroIn.className=p==='idle'?'idle':''}
 setPose('idle');layout();mark();scroll();setT(hx(col),hy(row));
-setInterval(()=>{if(busy||pose!=='idle')return;heroIn.innerHTML=SP.blink;setTimeout(()=>{if(!busy&&pose==='idle')heroIn.innerHTML=SP.idle},140)},3200);
+setInterval(()=>{if(busy||pose!=='idle')return;showPose('blink');setTimeout(()=>{if(!busy&&pose==='idle')showPose('idle')},140)},3200);
 function sched(list,d){list.forEach(([o,p])=>setTimeout(()=>setPose(p),o*d))}
 function go(dc,dr){const nc=col+dc,nr=row+dr;if(busy||nc<0||nc>1||nr<0||nr>2||(dc===0&&dr===0))return;busy=true;msg.textContent='';
 const x0=hx(col),y0=hy(row),x1=hx(nc),y1=hy(nr);let d,ha;
@@ -66,10 +70,19 @@ function launch(n){
 ask('/launch?ids='+encodeURIComponent(n[2].join(',')),r=>{
 if(!r){launchDirect(n);return}
 msg.textContent=r.ok?'':n[0]+' could not be opened. Is it installed on this TV?'})}
-// If the service isn't running, ask the TV's REST API directly. The page can't read its reply.
+// If the service isn't running, open the app through the TV's REST API. A tile looks up its
+// app's real ID in the TV's list first, because a wrong ID may not open the right thing.
+// The page can't read the API's reply, so it can't confirm the app opened.
 function launchDirect(n){
-n[2].filter(id=>/^\d+$/.test(id)).forEach(id=>{const x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:8001/api/v2/applications/'+id);x.send()});
-setTimeout(()=>{if(msg.textContent==='Opening '+n[0]+'…')msg.textContent='If '+n[0]+" doesn't open, check that it's installed on this TV."},4000)}
+const post=id=>{const x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:8001/api/v2/applications/'+id);x.send();
+setTimeout(()=>{if(msg.textContent==='Opening '+n[0]+'…')msg.textContent='If '+n[0]+" doesn't open, check that it's installed on this TV."},4000)};
+if(!n[4]){post(n[2][0]);return}
+const pick=list=>{
+const a=list?list.filter(x=>n[4].test(x.name))[0]:null;
+if(list&&!a){msg.textContent=n[0]+" isn't installed on this TV.";return}
+post(a?a.id:n[2].filter(id=>/^\d+$/.test(id))[0])};
+if(installed){pick(installed);return}
+listFromRemote(list=>{if(list&&list.length){installed=list;pick(list)}else pick(null)})}
 // The service starts alongside the page, so it may need a few seconds to answer.
 function useInstalledApps(tries){
 if(PREVIEW)return;
@@ -89,6 +102,7 @@ try{token=localStorage.getItem('remoteToken')||''}catch(e){}
 const urls=['ws://127.0.0.1:8001/api/v2/channels/samsung.remote.control?name='+name,'wss://127.0.0.1:8002/api/v2/channels/samsung.remote.control?name='+name+(token?'&token='+token:'')];
 const attempt=i=>{let settled=false,ws;
 const next=()=>{if(settled)return;settled=true;if(i+1<urls.length)attempt(i+1);else done(null)};
+setTimeout(next,20000);
 try{ws=new WebSocket(urls[i])}catch(e){next();return}
 ws.onerror=next;ws.onclose=next;
 ws.onmessage=e=>{let m={};try{m=JSON.parse(e.data)}catch(x){}

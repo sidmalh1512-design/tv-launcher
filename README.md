@@ -33,13 +33,19 @@ Open `dist/index.html` in a browser. Arrows move, Enter opens, Esc is Back. Noth
 
 ## Tile artwork
 
-Each tile is an image from `assets/tiles/`, built into `dist/index.html`. Replace a file and rebuild to change it. The logos belong to their owners and come from Wikimedia Commons.
+Logos are in `assets/tiles/`, and the glass look is in `scripts/glass.css`. TVs struggle to draw that glass live, so each tile is pre-rendered, plain and selected, into `assets/baked/`, which the build inlines. After changing either, rebake and rebuild:
+
+    CHROME=/path/to/chrome node scripts/bake-tiles.js <work dir>
+    node scripts/matte.js <work dir>
+    npm run build
+
+The logos belong to their owners and come from Wikimedia Commons.
 
 ## Opening apps
 
 TizenBrew module pages have no access to the `tizen` API, so `src/service.js` runs as the module's service, where `tizen` is available. The page asks it over `http://127.0.0.1:8086` to list installed apps and launch them. It only answers requests from the launcher page.
 
-A matching app's ID from the TV's list is tried first, followed by the known IDs in `src/launcher.js`. If `tizen.application.launch` fails, the service tries the TV's REST API. If the service isn't running, the page calls that REST API directly.
+A matching app's ID from the TV's list is tried first, followed by the known IDs in `src/launcher.js`. If `tizen.application.launch` fails, the service tries the TV's REST API. If the service isn't running, a tile finds its app's real ID in the list from the TV's remote-control socket, then calls that REST API directly. An app missing from the list is reported as not installed.
 
 ## All Apps
 
