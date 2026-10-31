@@ -19,7 +19,7 @@ acorn.parse(code, { ecmaVersion: 5 });
 const baked = (file) => 'url(data:image/webp;base64,' + fs.readFileSync('assets/baked/' + file + '.webp').toString('base64') + ')';
 const images = ['netflix', 'youtube', 'prime', 'spotify', 'disney', 'apps'].map((name, i) => {
   const tile = '.tile:nth-child(' + (i + 1) + ')';
-  return tile + ':before{background-image:' + baked(name) + '}\n' + tile + '.on:before{background-image:' + baked(name + '-on') + '}';
+  return tile + ':before{background-image:' + baked(name) + '}\n' + tile + ':after{background-image:' + baked(name + '-on') + '}';
 }).join('\n');
 const html = fs.readFileSync('src/index.html', 'utf8')
   .replace('/*TILE_IMAGES*/', () => images)

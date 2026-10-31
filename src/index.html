@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <title>Avatar Q Launcher</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Figtree:wght@400;500;600&display=swap">
 <style>
 :root{
   --screen:#0B0E14;--tile:#1F2430;--line:#323949;--fg:#E7EAF1;--muted:#99A1B3;--accent:#6E9DFF;--accent-ink:#A9C4FF;--shadow:#3A4252;
-  --display:"Silkscreen","Courier New",monospace;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 html,body{margin:0;height:100%;overflow:hidden;background:#070B18;color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
 body{background:radial-gradient(60% 50% at 18% 12%,rgba(38,214,170,.5),transparent),radial-gradient(55% 60% at 85% 22%,rgba(122,76,255,.55),transparent),radial-gradient(70% 60% at 55% 105%,rgba(20,120,200,.45),transparent),#070B18}
 #tv{position:absolute;left:0;top:0;width:700px;height:394px;box-sizing:border-box;padding:18px 16px 16px;transform-origin:0 0}
-#stage{position:absolute;left:16px;width:668px;bottom:16px;height:360px;transition:transform .7s ease-in-out;will-change:transform}
-.tile{position:absolute;height:200px;font-size:0;transition:transform .2s ease-out;cursor:pointer;transform-origin:50% 100%;box-sizing:border-box;will-change:transform}
-.tile:before{content:"";position:absolute;left:-56px;top:-56px;right:-56px;bottom:-56px;background:center/100% 100% no-repeat}
+#stage{position:absolute;left:16px;width:668px;bottom:16px;height:360px;transition:transform .4s cubic-bezier(.2,.8,.3,1);will-change:transform}
+.tile{position:absolute;height:200px;font-size:0;transition:transform .12s ease-out;cursor:pointer;transform-origin:50% 100%;box-sizing:border-box;will-change:transform}
+.tile:before,.tile:after{content:"";position:absolute;left:-56px;top:-56px;right:-56px;bottom:-56px;background:center/100% 100% no-repeat;will-change:opacity}
+.tile:after{opacity:0}
+.tile.on:before{opacity:0}
+.tile.on:after{opacity:1}
 .tile.on{transform:scale(1.02)}
 .pose{position:absolute;left:0;top:0;visibility:hidden;will-change:transform}
 .pose.show{visibility:visible}
@@ -27,7 +29,7 @@ body{background:radial-gradient(60% 50% at 18% 12%,rgba(38,214,170,.5),transpare
 #shadow{position:absolute;left:4px;bottom:197px;width:28px;height:5px;border-radius:50%;background:var(--shadow);z-index:1;will-change:transform,opacity}
 #msg{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;color:var(--fg);font-size:14px;z-index:5;text-shadow:0 0 6px #000}
 [hidden]{display:none!important}
-#apps{position:absolute;left:0;top:0;width:700px;height:394px;box-sizing:border-box;padding:30px 60px 16px;background:rgba(6,8,14,.72);z-index:4;display:flex;flex-direction:column}
+#apps{position:absolute;left:0;top:0;width:700px;height:394px;box-sizing:border-box;padding:30px 60px 16px;background:rgba(6,8,14,.35);z-index:4;display:flex;flex-direction:column}
 #apps h1{margin:0 0 10px;font-size:20px;font-weight:600}
 .searchbar{border:2px solid var(--line);border-radius:10px;background:rgba(255,255,255,.1);padding:6px 12px;margin-bottom:10px}
 .searchbar.on{border-color:var(--accent)}

@@ -27,7 +27,11 @@ function showPose(p){if(showing)showing.classList.remove('show');showing=POSES[p
 function setPose(p){pose=p;showPose(p);heroIn.className=p==='idle'?'idle':''}
 setPose('idle');layout();mark();scroll();setT(hx(col),hy(row));
 setInterval(()=>{if(busy||pose!=='idle')return;showPose('blink');setTimeout(()=>{if(!busy&&pose==='idle')showPose('idle')},140)},3200);
-function sched(list,d){list.forEach(([o,p])=>setTimeout(()=>setPose(p),o*d))}
+// A press during a move ends that move at once so the next one starts with no delay.
+let running=[],timers=[];
+[hero,rot,shadow].forEach(el=>{el.animate=function(k,o){const a=Element.prototype.animate.call(this,k,o);running.push(a);return a}});
+function skip(){running.forEach(a=>{a.onfinish=null;a.cancel()});running=[];timers.forEach(clearTimeout);timers=[];setT(hx(col),hy(row));rot.style.transform='rotate(0deg)';setPose('idle');busy=false;hopping=false}
+function sched(list,d){timers=list.map(([o,p])=>setTimeout(()=>setPose(p),o*d))}
 function go(dc,dr){const nc=col+dc,nr=row+dr;if(busy||nc<0||nc>1||nr<0||nr>2||(dc===0&&dr===0))return;busy=true;msg.textContent='';
 const x0=hx(col),y0=hy(row),x1=hx(nc),y1=hy(nr);let d,ha;
 if(dr===0){const dir=dc>0?1:-1,dist=Math.abs(dc),h=60+(dist-1)*12;d=(900+(dist-1)*120)*slow;const mx=(x0+x1)/2;
@@ -45,11 +49,12 @@ ha=shadow.animate([{offset:0,transform:T(x0,y0),opacity:1},{offset:0.12,transfor
 sched([[0,'crouch'],[0.12,'jump'],[0.3,'fall'],[0.78,'crouch'],[0.94,'idle']],d)}
 col=nc;row=nr;mark();scroll();
 ha.onfinish=()=>{setT(x1,y1);rot.style.transform='rotate(0deg)';busy=false}}
-function hop(){if(busy)return;busy=true;const x=hx(col),y=hy(row),d=520*slow;
+let hopping=false;
+function hop(){if(busy)return;busy=true;hopping=true;openTile(NAMES[row*2+col]);const x=hx(col),y=hy(row),d=520*slow;
 hero.animate([{offset:0,transform:T(x,y)},{offset:0.2,transform:T(x,y),easing:'ease-out'},{offset:0.48,transform:T(x,y-26),easing:'ease-in'},{offset:0.76,transform:T(x,y)},{offset:1,transform:T(x,y)}],{duration:d});
 const sa=shadow.animate([{offset:0,transform:T(x,y)+' scale(1)'},{offset:0.2,transform:T(x,y)+' scale(1)'},{offset:0.48,transform:T(x,y)+' scale(0.75)'},{offset:0.76,transform:T(x,y)+' scale(1)'},{offset:1,transform:T(x,y)+' scale(1)'}],{duration:d});
 sched([[0,'crouch'],[0.2,'jump'],[0.76,'crouch'],[0.92,'idle']],d);
-sa.onfinish=()=>{busy=false;openTile(NAMES[row*2+col])}}
+sa.onfinish=()=>{busy=false;hopping=false}}
 
 // TizenBrew serves module pages from /module/. Those pages have no tizen API, so the
 // module's service (src/service.js) lists and launches apps for them.
@@ -87,7 +92,11 @@ listFromRemote(list=>{if(list&&list.length){installed=list;pick(list)}else pick(
 function useInstalledApps(tries){
 if(PREVIEW)return;
 ask('/apps',r=>{
-if(!r){if(tries>0)setTimeout(()=>useInstalledApps(tries-1),1000);return}
+if(!r){if(tries>0)setTimeout(()=>useInstalledApps(tries-1),1000);
+// Once the TV has allowed the remote socket, fetch the list ahead of time so tiles open faster.
+if(tries===18&&!installed){let allowed=false;try{allowed=!!localStorage.getItem('remoteAllowed')}catch(e){}
+if(allowed)listFromRemote(list=>{if(list&&list.length&&!installed)installed=list})}
+return}
 installed=r.apps;
 NAMES.forEach(n=>{
 if(!n[4])return;
@@ -110,6 +119,7 @@ if(m.event==='ms.channel.connect'){
 if(m.data&&m.data.token){try{localStorage.setItem('remoteToken',m.data.token)}catch(x){}}
 ws.send(JSON.stringify({method:'ms.channel.emit',params:{event:'ed.installedApp.get',to:'host'}}))}
 else if(m.event==='ed.installedApp.get'){settled=true;ws.close();
+try{localStorage.setItem('remoteAllowed','1')}catch(x){}
 done(((m.data&&m.data.data)||[]).map(a=>({id:a.appId,name:a.name})))}
 else if(m.event==='ms.channel.unauthorized')next()}};
 attempt(0)}
@@ -130,7 +140,7 @@ search.parentNode.classList.toggle('on',appPos<0);
 [].forEach.call(appList.children,(d,i)=>{d.classList.toggle('on',i===appPos)});
 if(appPos>=0)appList.scrollTop=Math.max(0,(appPos-3)*38);else appList.scrollTop=0}
 function openApps(){
-appsOpen=true;appsView.hidden=false;appPos=-1;search.value='';
+appsOpen=true;appsView.hidden=false;stage.style.visibility='hidden';appPos=-1;search.value='';
 if(PREVIEW)installed=SAMPLE_APPS;
 if(installed){drawApps();return}
 appNote.textContent='Loading your apps…';drawApps();
@@ -140,7 +150,7 @@ appNote.textContent="Loading your apps… If the TV asks for permission, choose 
 listFromRemote(list=>{
 if(list&&list.length){installed=list;drawApps()}
 else appNote.textContent="Couldn't read the list of apps on this TV."})})}
-function closeApps(){search.blur();appsOpen=false;appsView.hidden=true;msg.textContent=''}
+function closeApps(){search.blur();appsOpen=false;appsView.hidden=true;stage.style.visibility='';msg.textContent=''}
 function appsKey(e){
 const c=e.keyCode;
 if(document.activeElement===search){
@@ -162,8 +172,12 @@ if(PREVIEW){msg.textContent='Preview: Back would return to TizenBrew.';return}
 history.back()}
 // Samsung remotes report keyCode reliably; 10009 is Back, Escape and Backspace stand in for it in a browser.
 document.addEventListener('keydown',e=>{if(appsOpen){appsKey(e);return}const c=e.keyCode,k={37:[-1,0],39:[1,0],38:[0,-1],40:[0,1]}[c];
-if(k){e.preventDefault();go(k[0],k[1])}
-else if(c===13){e.preventDefault();hop()}
+if(k){e.preventDefault();
+const nc=col+k[0],nr=row+k[1];
+if(nc<0||nc>1||nr<0||nr>2)return;
+if(busy&&!e.repeat)skip();
+go(k[0],k[1])}
+else if(c===13){e.preventDefault();if(hopping||e.repeat)return;if(busy)skip();hop()}
 else if(c===10009||(PREVIEW&&(c===27||c===8))){e.preventDefault();exitToBrew()}});
 // The 700x394 design (stage plus its original padding) is scaled to fill the screen.
 function fit(){const s=Math.min(innerWidth/700,innerHeight/394),tv=document.getElementById('tv');
