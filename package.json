@@ -1,7 +1,7 @@
 {
   "name": "@sidmalh1512-design/tv-launcher",
   "appName": "Avatar Q Launcher",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Pixel avatar TV home screen",
   "packageType": "app",
   "appPath": "dist/index.html",

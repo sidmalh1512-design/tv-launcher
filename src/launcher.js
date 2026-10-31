@@ -145,7 +145,9 @@ function appsKey(e){
 const c=e.keyCode;
 if(document.activeElement===search){
 // 65376 is Done and 65385 is Cancel on the TV's on-screen keyboard.
-if(c===13||c===65376||c===65385||c===10009||c===27){e.preventDefault();search.blur()}
+// The keyboard can close without a key event, leaving focus here, so Down must still reach the results.
+if(c===13||c===65376||c===40){e.preventDefault();search.blur();if(shown.length)appPos=0;markApp()}
+else if(c===65385||c===10009||c===27){e.preventDefault();search.blur()}
 return}
 if(c===38||c===40){e.preventDefault();appPos=Math.max(-1,Math.min(shown.length-1,appPos+(c===40?1:-1)));markApp()}
 else if(c===13){e.preventDefault();if(appPos<0)search.focus();else if(shown[appPos]){

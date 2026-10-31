@@ -826,7 +826,13 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
     var c = e.keyCode;
     if (document.activeElement === search) {
       // 65376 is Done and 65385 is Cancel on the TV's on-screen keyboard.
-      if (c === 13 || c === 65376 || c === 65385 || c === 10009 || c === 27) {
+      // The keyboard can close without a key event, leaving focus here, so Down must still reach the results.
+      if (c === 13 || c === 65376 || c === 40) {
+        e.preventDefault();
+        search.blur();
+        if (shown.length) appPos = 0;
+        markApp();
+      } else if (c === 65385 || c === 10009 || c === 27) {
         e.preventDefault();
         search.blur();
       }
